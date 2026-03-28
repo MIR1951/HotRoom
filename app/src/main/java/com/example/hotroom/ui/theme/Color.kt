@@ -2,37 +2,71 @@ package com.example.hotroom.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary Green Palette
-val GreenPrimary = Color(0xFF4CAF50)
-val GreenPrimaryDark = Color(0xFF388E3C)
-val GreenPrimaryLight = Color(0xFFC8E6C9)
-val GreenPrimaryContainer = Color(0xFFE8F5E9)
-val GreenOnPrimary = Color(0xFFFFFFFF)
+// Emerald Canopy (Organic Tailwind) Colors
+val Primary = Color(0xFF006E1C)
+val OnPrimary = Color(0xFFFFFFFF)
+val PrimaryContainer = Color(0xFF4CAF50)
+val OnPrimaryContainer = Color(0xFF003C0B)
 
-// Background & Surface
-val BackgroundLight = Color(0xFFF5F5F5)
-val SurfaceLight = Color(0xFFFFFFFF)
-val SurfaceVariantLight = Color(0xFFF0F0F0)
+val Secondary = Color(0xFF7A5649)
+val OnSecondary = Color(0xFFFFFFFF)
+val SecondaryContainer = Color(0xFFFDCDBA) 
+val OnSecondaryContainer = Color(0xFF795548)
 
-// Text
-val TextPrimary = Color(0xFF1B1B1F)
-val TextSecondary = Color(0xFF6B6B6B)
-val TextOnGreen = Color(0xFFFFFFFF)
+val Tertiary = Color(0xFF0061A4)
+val OnTertiary = Color(0xFFFFFFFF)
+val TertiaryContainer = Color(0xFF33A0FE)
+val OnTertiaryContainer = Color(0xFF00355D)
 
-// Semantic
-val AccentOrange = Color(0xFFFF9800)
-val ErrorRed = Color(0xFFD32F2F)
-val SuccessGreen = Color(0xFF2E7D32)
-val InfoBlue = Color(0xFF1976D2)
+val Error = Color(0xFFBA1A1A)
+val OnError = Color(0xFFFFFFFF)
+val ErrorContainer = Color(0xFFFFDAD6)
+val OnErrorContainer = Color(0xFF93000A)
 
-// Card/Chart Colors
-val ChartGreenDark = Color(0xFF4CAF50)
-val ChartGreenMedium = Color(0xFF81C784)
-val ChartGreenLight = Color(0xFFA5D6A7)
-val ChartGreenPale = Color(0xFFC8E6C9)
+val Background = Color(0xFFF8FAF8)
+val OnBackground = Color(0xFF191C1B)
 
-// Health Status
-val HealthExcellent = Color(0xFF4CAF50)
-val HealthGood = Color(0xFF8BC34A)
-val HealthWarning = Color(0xFFFF9800)
-val HealthCritical = Color(0xFFD32F2F)
+val Surface = Color(0xFFF8FAF8)
+val OnSurface = Color(0xFF191C1B)
+val SurfaceVariant = Color(0xFFE1E3E1)
+val OnSurfaceVariant = Color(0xFF3F4A3C)
+
+val Outline = Color(0xFF6F7A6B)
+val OutlineVariant = Color(0xFFBECAB9)
+
+// Surface Containers (Tailwind custom scale)
+val SurfaceContainerLowest = Color(0xFFFFFFFF)
+val SurfaceContainerLow = Color(0xFFF2F4F2)
+val SurfaceContainer = Color(0xFFECEEEC)
+val SurfaceContainerHigh = Color(0xFFE6E9E7)
+val SurfaceContainerHighest = Color(0xFFE1E3E1)
+
+// Semantic health indicators (Keep for logic)
+val HealthExcellent = Color(0xFF006E1C) 
+val HealthGood = Color(0xFF4CAF50)
+val HealthWarning = Color(0xFF7A5649) // Using secondary earth tone for warning
+val HealthCritical = Color(0xFFBA1A1A)
+
+// Backward compatibility mappings for older screens
+val GreenPrimary = Primary
+val GreenPrimaryDark = Color(0xFF005313) 
+val GreenPrimaryLight = Color(0xFF94F990) 
+val GreenPrimaryContainer = PrimaryContainer
+val GreenOnPrimary = OnPrimary
+
+val BackgroundLight = Background
+val SurfaceLight = Surface
+val SurfaceVariantLight = SurfaceVariant
+
+val TextPrimary = OnBackground
+val TextSecondary = Outline
+val TextOnGreen = OnPrimary
+
+val AccentOrange = Secondary // mapped to earth tones
+val ErrorRed = Error
+val InfoBlue = Tertiary
+val SuccessGreen = Primary
+
+// Glassmorphism fallback
+val GlassBorder = OutlineVariant
+val GlassSurface = SurfaceContainerLowest

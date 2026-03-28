@@ -1,12 +1,17 @@
 package com.example.hotroom.ui.screens.plants
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,8 +24,6 @@ import androidx.compose.ui.unit.sp
 import com.example.hotroom.data.model.Plant
 import com.example.hotroom.ui.theme.*
 import com.example.hotroom.ui.viewmodel.PlantUiState
-import java.time.Instant
-import java.time.Duration
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,229 +34,270 @@ fun PlantListScreen(
     onWaterPlant: (String) -> Unit,
     onDeletePlant: (String) -> Unit
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "O'simliklar Ro'yxati",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp)
-        ) {
-            OutlinedTextField(
-                value = plantState.searchQuery,
-                onValueChange = onSearchChange,
-                placeholder = { Text("O'simliklarni qidirish...", color = TextSecondary) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondary) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = Color.Transparent,
-                    focusedBorderColor = GreenPrimary,
-                    unfocusedContainerColor = SurfaceLight,
-                    focusedContainerColor = SurfaceLight,
-                    cursorColor = GreenPrimary
-                )
-            )
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Background)
+    ) {
+         LazyColumn(
+             modifier = Modifier
+                 .fillMaxSize()
+                 .padding(horizontal = 24.dp),
+             contentPadding = PaddingValues(top = 16.dp, bottom = 100.dp)
+         ) {
+             // Header Section
+             item {
+                 Text(
+                     text = "Bizning o'simliklarimiz",
+                     style = MaterialTheme.typography.headlineLarge,
+                     fontWeight = FontWeight.ExtraBold,
+                     color = TextPrimary
+                 )
+                 Spacer(modifier = Modifier.height(8.dp))
+                 Text(
+                     text = "Har bir barg bilan jonli raqamli issiqxonani barpo etamiz.",
+                     style = MaterialTheme.typography.bodyMedium,
+                     color = TextSecondary,
+                     lineHeight = 20.sp
+                 )
+                 Spacer(modifier = Modifier.height(24.dp))
+             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+             // Search and Filter Bar
+             item {
+                 Row(
+                     modifier = Modifier.fillMaxWidth(),
+                     horizontalArrangement = Arrangement.spacedBy(16.dp),
+                     verticalAlignment = Alignment.CenterVertically
+                 ) {
+                     TextField(
+                         value = plantState.searchQuery,
+                         onValueChange = onSearchChange,
+                         placeholder = {
+                             Text(
+                                 "Issiqxonangizdan qidiring...",
+                                 color = TextSecondary,
+                                 style = MaterialTheme.typography.bodyMedium
+                             )
+                         },
+                         leadingIcon = {
+                             Icon(Icons.Outlined.Search, contentDescription = null, tint = TextSecondary)
+                         },
+                         modifier = Modifier
+                             .weight(1f)
+                             .height(56.dp),
+                         shape = RoundedCornerShape(28.dp),
+                         colors = TextFieldDefaults.colors(
+                             unfocusedIndicatorColor = Color.Transparent,
+                             focusedIndicatorColor = Color.Transparent,
+                             focusedContainerColor = Color.White,
+                             unfocusedContainerColor = Color.White
+                         ),
+                         singleLine = true
+                     )
+                     
+                     Box(
+                         modifier = Modifier
+                             .size(56.dp)
+                             .clip(CircleShape)
+                             .background(Color.White)
+                             .clickable { /* Filter Action */ },
+                         contentAlignment = Alignment.Center
+                     ) {
+                         Icon(Icons.Outlined.Tune, contentDescription = "Filtrlash", tint = TextPrimary)
+                     }
+                 }
+                 Spacer(modifier = Modifier.height(24.dp))
+             }
 
-            if (plantState.isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = GreenPrimary)
-                }
-            } else if (plantState.plants.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = "🌱", fontSize = 48.sp)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text("Hali o'simlik qo'shilmagan", style = MaterialTheme.typography.titleMedium, color = TextSecondary)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(
-                            onClick = onNavigateToAddPlant,
-                            colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("O'simlik qo'shish")
-                        }
-                    }
-                }
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(bottom = 100.dp)
-                ) {
-                    items(plantState.plants) { plant ->
-                        PlantCard(
-                            plant = plant,
-                            onWater = { onWaterPlant(plant.id) },
-                            onDelete = { onDeletePlant(plant.id) }
-                        )
-                    }
-                }
-            }
-        }
+             // Plant List
+             if (plantState.isLoading) {
+                 item {
+                     Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                         CircularProgressIndicator(color = GreenPrimary)
+                     }
+                 }
+             } else {
+                 items(plantState.plants) { plant ->
+                     PlantFullWidthCard(plant = plant, onClick = { /* Navigate to detail */ })
+                     Spacer(modifier = Modifier.height(24.dp))
+                 }
+             }
+
+             // Add Plant Placeholder Card
+             item {
+                 Card(
+                     modifier = Modifier
+                         .fillMaxWidth()
+                         .clickable { onNavigateToAddPlant() },
+                     shape = RoundedCornerShape(24.dp),
+                     colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                 ) {
+                     Box(
+                         modifier = Modifier
+                             .fillMaxWidth()
+                             .border(
+                                 width = 2.dp,
+                                 color = Color(0xFFD1D5DB),
+                                 shape = RoundedCornerShape(24.dp)
+                             )
+                             .padding(vertical = 32.dp),
+                         contentAlignment = Alignment.Center
+                     ) {
+                         // Dotted border is simulated via simple border on this snippet without writing complex path logic, 
+                         // but it visually represents the "Add" block. To make true dotted border, standard drawBehind is needed.
+                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                             Box(
+                                 modifier = Modifier
+                                     .size(48.dp)
+                                     .clip(CircleShape)
+                                     .background(Color(0xFFF3F4F6)),
+                                 contentAlignment = Alignment.Center
+                             ) {
+                                 Icon(Icons.Default.Add, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(24.dp))
+                             }
+                             Spacer(modifier = Modifier.height(16.dp))
+                             Text(
+                                 text = "Yangi o'simlik qo'shish",
+                                 style = MaterialTheme.typography.titleMedium,
+                                 fontWeight = FontWeight.Bold,
+                                 color = TextPrimary
+                             )
+                             Spacer(modifier = Modifier.height(4.dp))
+                             Text(
+                                 text = "Issiqxonangiz kolleksiyasini kengaytiring",
+                                 style = MaterialTheme.typography.bodySmall,
+                                 color = TextSecondary
+                             )
+                         }
+                     }
+                 }
+                 Spacer(modifier = Modifier.height(24.dp))
+             }
+         }
+
+         FloatingActionButton(
+             onClick = onNavigateToAddPlant,
+             modifier = Modifier
+                 .align(Alignment.BottomEnd)
+                 .padding(end = 24.dp, bottom = 80.dp),
+             containerColor = GreenPrimary,
+             contentColor = Color.White,
+             shape = CircleShape
+         ) {
+             Icon(Icons.Default.Add, contentDescription = "Qo'shish")
+         }
     }
 }
 
 @Composable
-private fun PlantCard(
+fun PlantFullWidthCard(
     plant: Plant,
-    onWater: () -> Unit,
-    onDelete: () -> Unit
+    onClick: () -> Unit
 ) {
-    val emoji = when (plant.category.lowercase()) {
-        "sabzavot" -> "🥬"
-        "ko'kat" -> "🌿"
-        "gul" -> "🌸"
-        "meva" -> "🍎"
-        else -> "🌱"
-    }
-
-    val healthColor = when {
-        plant.healthStatus >= 80 -> GreenPrimary
-        plant.healthStatus >= 50 -> AccentOrange
-        else -> ErrorRed
-    }
-
-    val waterText = if (plant.lastWatered != null) {
-        try {
-            val lastWatered = Instant.parse(plant.lastWatered)
-            val diff = Duration.between(lastWatered, Instant.now())
-            when {
-                diff.toMinutes() < 60 -> "${diff.toMinutes()} daqiqa oldin"
-                diff.toHours() < 24 -> "${diff.toHours()} soat oldin"
-                else -> "${diff.toDays()} kun oldin"
-            }
-        } catch (e: Exception) { "Noma'lum" }
-    } else "Hali sug'orilmagan"
-
-    // Sug'orish muddati o'tdimi?
-    val needsWater = if (plant.lastWatered != null) {
-        try {
-            val lastWatered = Instant.parse(plant.lastWatered)
-            val hoursSince = Duration.between(lastWatered, Instant.now()).toHours()
-            hoursSince >= plant.wateringIntervalHours
-        } catch (e: Exception) { true }
-    } else true
-
+    val healthTag = if (plant.healthStatus >= 80) "O'SISHDA" else "DIQQAT"
+    val tagBg = if (plant.healthStatus >= 80) GreenPrimary else InfoBlue
+    
+    // Status Logic for the bottom row
+    // We mock logic to show either "34% Namlik", "2 soat oldin (sug'orish)", "Yorqin yorug'lik", "Tuproq quruq"
+    val isPrimaryAction = plant.healthStatus < 80 // To make the button Green or Grey
+    
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceLight),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(GreenPrimaryContainer),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(text = emoji, fontSize = 28.sp)
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = plant.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    if (plant.scientificName != null) {
-                        Text(
-                            text = plant.scientificName,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary
-                        )
-                    }
-                    if (plant.zone != null) {
-                        Text(
-                            text = "📍 Zona ${plant.zone}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextSecondary
-                        )
-                    }
-                }
-
-                // Quick water button
-                IconButton(onClick = onWater) {
-                    Icon(
-                        Icons.Default.WaterDrop,
-                        contentDescription = "Sug'orish",
-                        tint = if (needsWater) AccentOrange else InfoBlue,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Health progress bar
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Sog'ligi", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                Text(
-                    text = "${plant.healthStatus}%",
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = healthColor
-                )
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            LinearProgressIndicator(
-                progress = { plant.healthStatus / 100f },
+        Column {
+            // Image Area
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(3.dp)),
-                color = healthColor,
-                trackColor = healthColor.copy(alpha = 0.15f),
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Info row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .height(180.dp)
+                    .background(Color.DarkGray) // Placeholder for photo
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "💧 ", style = MaterialTheme.typography.labelSmall)
+                // Top-left Tag
+                Box(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(tagBg)
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                ) {
                     Text(
-                        text = waterText,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (needsWater) AccentOrange else GreenPrimary,
-                        fontWeight = FontWeight.Medium
-                    )
+                        text = healthTag,
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        letterSpacing = 1.sp
+                     )
                 }
+            }
+            
+            // Info Area
+            Column(modifier = Modifier.padding(20.dp)) {
                 Text(
-                    text = "⏱ Har ${plant.wateringIntervalHours} soatda",
-                    style = MaterialTheme.typography.labelSmall,
+                    text = plant.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = plant.scientificName ?: "Noma'lum tur",
+                    style = MaterialTheme.typography.bodySmall.copy(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
                     color = TextSecondary
                 )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        val labelText = if (plant.healthStatus >= 80) "NAMLIK" else "OXIRGI SUG'ORISH"
+                        val valText = if (plant.healthStatus >= 80) "34% Namlik" else "2 soat oldin"
+                        val valColor = if (plant.healthStatus >= 80) InfoBlue else GreenPrimary
+                        
+                        Text(
+                            text = labelText,
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                            fontWeight = FontWeight.Bold,
+                            color = TextSecondary,
+                            letterSpacing = 0.5.sp
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = valText,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = valColor
+                        )
+                    }
+                    
+                    // BATAFSIL Button
+                    val btnBg = if (isPrimaryAction) GreenPrimary else SurfaceContainerLow
+                    val btnText = if (isPrimaryAction) Color.White else TextPrimary
+                    
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(btnBg)
+                            .padding(horizontal = 20.dp, vertical = 10.dp)
+                    ) {
+                        Text(
+                            text = "BATAFSIL",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = btnText,
+                            letterSpacing = 1.sp
+                        )
+                    }
+                }
             }
         }
     }

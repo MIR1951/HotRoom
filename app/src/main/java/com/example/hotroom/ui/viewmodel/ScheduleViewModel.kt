@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
+import com.example.hotroom.data.repository.SessionManager
 
 data class ScheduleUiState(
     val isLoading: Boolean = false,
@@ -50,11 +51,13 @@ class ScheduleViewModel(
         }
     }
 
-    fun loadMonthTasks() {
+    fun loadMonthTasks(showLoading: Boolean = true) {
         val userId = authRepository.getCurrentUserId() ?: return
         val currentMonth = _uiState.value.currentMonth
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            if (showLoading) {
+                _uiState.value = _uiState.value.copy(isLoading = true)
+            }
             val result = taskRepository.getTasksByMonth(
                 userId, currentMonth.year, currentMonth.monthValue
             )
@@ -69,6 +72,10 @@ class ScheduleViewModel(
             val selectedDate = _uiState.value.selectedDate
             val dayTasks = allTasks.filter {
                 it.scheduledDate == selectedDate.toString()
+            }.map { task ->
+                if (task.isCompleted && task.completedBy != null) {
+                    task.copy(completerName = com.example.hotroom.data.repository.SessionManager.greenhouseProfiles[task.completedBy]?.name?.ifBlank { "Ishchi" })
+                } else task
             }
 
             _uiState.value = _uiState.value.copy(
@@ -92,7 +99,11 @@ class ScheduleViewModel(
         viewModelScope.launch {
             val result = taskRepository.getTodayTasks(userId, selectedDate.toString())
             _uiState.value = _uiState.value.copy(
-                tasks = result.getOrDefault(emptyList())
+                tasks = result.getOrDefault(emptyList()).map { task ->
+                    if (task.isCompleted && task.completedBy != null) {
+                        task.copy(completerName = com.example.hotroom.data.repository.SessionManager.greenhouseProfiles[task.completedBy]?.name?.ifBlank { "Ishchi" })
+                    } else task
+                }
             )
         }
     }
@@ -117,9 +128,11 @@ class ScheduleViewModel(
     fun addTask(title: String, taskType: String, date: LocalDate, time: String?, plantId: String?) {
         val userId = authRepository.getCurrentUserId() ?: return
         viewModelScope.launch {
+            authRepository.ensureProfileLoaded()
             _uiState.value = _uiState.value.copy(isAddingTask = true)
             val task = CareTask(
                 userId = userId,
+                greenhouseId = SessionManager.greenhouseId,
                 plantId = plantId,
                 title = title,
                 taskType = taskType,
@@ -136,16 +149,18 @@ class ScheduleViewModel(
                 )
             }
             if (result.isSuccess) {
-                loadMonthTasks()
+                loadMonthTasks(showLoading = false)
             }
         }
     }
 
     fun markComplete(taskId: String) {
+        val userId = authRepository.getCurrentUserId() ?: return
         viewModelScope.launch {
-            taskRepository.markComplete(taskId)
+            authRepository.ensureProfileLoaded()
+            taskRepository.markComplete(taskId, userId)
             loadTasksForSelectedDate()
-            loadMonthTasks()
+            loadMonthTasks(showLoading = false)
         }
     }
 

@@ -38,10 +38,12 @@ class SensorViewModel(
         loadSensorData()
     }
 
-    fun loadSensorData() {
+    fun loadSensorData(showLoading: Boolean = true) {
         val userId = authRepository.getCurrentUserId() ?: return
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            if (showLoading) {
+                _uiState.value = _uiState.value.copy(isLoading = true)
+            }
 
             // Oxirgi ko'rsatkichlar
             val readingsResult = sensorRepository.getLatestReadings(userId)
@@ -79,15 +81,17 @@ class SensorViewModel(
     fun selectPlant(plantId: String?) {
         _uiState.value = _uiState.value.copy(selectedPlantId = plantId)
         if (plantId == null) {
-            loadSensorData()
+            loadSensorData(showLoading = true)
         } else {
-            loadPlantSensorData(plantId)
+            loadPlantSensorData(plantId, showLoading = true)
         }
     }
 
-    private fun loadPlantSensorData(plantId: String) {
+    private fun loadPlantSensorData(plantId: String, showLoading: Boolean = true) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            if (showLoading) {
+                _uiState.value = _uiState.value.copy(isLoading = true)
+            }
             
             // Muayyan o'simlik bo'yicha tarix
             val readingResult = sensorRepository.getReadingsForPlant(plantId)

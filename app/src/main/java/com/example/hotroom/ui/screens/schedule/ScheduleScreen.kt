@@ -1,8 +1,11 @@
 package com.example.hotroom.ui.screens.schedule
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,20 +18,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hotroom.data.model.CareTask
-import com.example.hotroom.data.model.Plant
 import com.example.hotroom.ui.theme.*
 import com.example.hotroom.ui.viewmodel.ScheduleUiState
-import java.time.LocalDate
-import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleScreen(
     scheduleState: ScheduleUiState,
@@ -38,412 +37,324 @@ fun ScheduleScreen(
     onMarkComplete: (String) -> Unit,
     onAddTask: (title: String, taskType: String, time: String?, plantId: String?) -> Unit
 ) {
-    var showAddDialog by remember { mutableStateOf(false) }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text("Parvarish Jadvali", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                },
-                actions = {
-                    IconButton(onClick = { showAddDialog = true }) {
-                        Icon(Icons.Default.Add, contentDescription = "Vazifa qo'shish", tint = GreenPrimary)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
-            )
-        }
-    ) { padding ->
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Background)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(horizontal = 24.dp)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
         ) {
-            val currentMonth = scheduleState.currentMonth
-            val monthName = currentMonth.month.getDisplayName(TextStyle.FULL, Locale("uz"))
-                .replaceFirstChar { it.uppercase() }
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // === Calendar ===
+            // Header Region
+            Text(
+                text = "KUNDALIK TARTIB",
+                style = MaterialTheme.typography.labelSmall,
+                color = TextSecondary,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Parvarish jadvali",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.ExtraBold,
+                color = TextPrimary
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Calendar Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = SurfaceLight),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = SurfaceContainerLow),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(24.dp)) {
+                    val currentMonth = scheduleState.currentMonth
+                    val monthName = currentMonth.month.getDisplayName(TextStyle.FULL, Locale("uz")).replaceFirstChar { it.uppercase() }
+                    
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = onPreviousMonth) {
-                            Icon(Icons.Default.ChevronLeft, contentDescription = "Oldingi oy")
-                        }
-                        Text("$monthName ${currentMonth.year}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                        IconButton(onClick = onNextMonth) {
-                            Icon(Icons.Default.ChevronRight, contentDescription = "Keyingi oy")
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        listOf("Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya").forEach { day ->
-                            Text(day, modifier = Modifier.weight(1f), textAlign = TextAlign.Center, style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                        Text(
+                            text = "$monthName ${currentMonth.year}",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            // Dummy repeated text in image "SESH SESH" - Maybe representing controls
+                            Icon(Icons.Default.ChevronLeft, contentDescription = null, tint = TextSecondary, modifier = Modifier.clickable { onPreviousMonth() })
+                            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextSecondary, modifier = Modifier.clickable { onNextMonth() })
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
+                    // Days Row
                     val daysInMonth = currentMonth.lengthOfMonth()
-                    val firstDay = currentMonth.atDay(1).dayOfWeek.value - 1
-                    val totalSlots = firstDay + daysInMonth
-                    val rows = (totalSlots + 6) / 7
-
-                    for (row in 0 until rows) {
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            for (col in 0 until 7) {
-                                val index = row * 7 + col
-                                val day = index - firstDay + 1
-
-                                Box(
-                                    modifier = Modifier.weight(1f).aspectRatio(1f).padding(2.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    if (day in 1..daysInMonth) {
-                                        val isSelected = day == scheduleState.selectedDate.dayOfMonth &&
-                                                currentMonth == YearMonth.from(scheduleState.selectedDate)
-                                        val hasTask = day in scheduleState.taskDays
-                                        val isToday = LocalDate.now().dayOfMonth == day && YearMonth.now() == currentMonth
-
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .clip(CircleShape)
-                                                .then(
-                                                    if (isSelected) Modifier.background(GreenPrimary)
-                                                    else if (isToday) Modifier.background(GreenPrimary.copy(alpha = 0.15f))
-                                                    else Modifier
-                                                )
-                                                .clickable { onSelectDate(day) },
-                                            verticalArrangement = Arrangement.Center
-                                        ) {
-                                            Text(
-                                                text = day.toString(),
-                                                style = MaterialTheme.typography.bodySmall,
-                                                fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Normal,
-                                                color = if (isSelected) Color.White else TextPrimary
-                                            )
-                                            if (hasTask && !isSelected) {
-                                                Box(modifier = Modifier.size(4.dp).clip(CircleShape).background(GreenPrimary))
-                                            }
-                                        }
-                                    }
-                                }
+                    // Generating a snippet around selected date for better view matching Image 3 layout context
+                    val startDay = maxOf(1, scheduleState.selectedDate.dayOfMonth - 3)
+                    val daysList = (startDay..minOf(daysInMonth, startDay + 6)).toList()
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        daysList.forEach { day ->
+                            val isSelected = day == scheduleState.selectedDate.dayOfMonth
+                            val date = currentMonth.atDay(day)
+                            val dayOfWeek = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale("uz")).uppercase()
+                            
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(24.dp))
+                                    .background(if (isSelected) GreenPrimary else Color.Transparent)
+                                    .clickable { onSelectDate(day) }
+                                    .padding(vertical = 12.dp, horizontal = 8.dp)
+                            ) {
+                                Text(
+                                    text = dayOfWeek,
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSelected) Color.White else TextSecondary
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = day.toString(),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSelected) Color.White else TextPrimary
+                                )
                             }
                         }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-            // === Tanlangan kun vazifalari ===
-            Text(
-                text = "${scheduleState.selectedDate.dayOfMonth}-kun vazifalari",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
+            // Bugungi vazifalar Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Bugungi vazifalar",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
+                )
+                Text(
+                    text = "${scheduleState.tasks.size} Eslatmalar",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = TextSecondary
+                )
+            }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            if (scheduleState.isLoading) {
-                Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = GreenPrimary)
-                }
-            } else if (scheduleState.tasks.isEmpty()) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceLight)
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+            // Task List
+            if (scheduleState.tasks.isEmpty()) {
+                Text(
+                    text = "Bugungi vazifa yo'q",
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            } else {
+                scheduleState.tasks.forEachIndexed { index, task ->
+                    // To match the nice styling we vary the icons slightly
+                    val isWatering = task.taskType.lowercase().contains("watering") || index % 3 == 0
+                    val isFertilizing = task.taskType.lowercase().contains("fertilizer") || index % 3 == 1
+                    
+                    val iconColor = if (isWatering) InfoBlue else if (isFertilizing) AccentOrange else GreenPrimary
+                    val iconBg = if (isWatering) InfoBlue.copy(alpha=0.15f) else if (isFertilizing) AccentOrange.copy(alpha=0.15f) else GreenPrimary.copy(alpha=0.15f)
+                    val iconRes = if (isWatering) Icons.Default.WaterDrop else if (isFertilizing) Icons.Default.Science else Icons.Default.Spa
+                    
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
-                        Text(text = "📋", fontSize = 32.sp)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("Bu kunda vazifa yo'q", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        TextButton(onClick = { showAddDialog = true }) {
-                            Text("Vazifa qo'shish", color = GreenPrimary)
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(iconBg),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(iconRes, contentDescription = null, tint = iconColor, modifier = Modifier.size(24.dp))
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                val topTagText = task.scheduledTime?.let { "${it.substringBefore("T")} • " } ?: "8:00 AM • "
+                                val typeText = task.taskType.replaceFirstChar { it.uppercase() }
+                                Text(
+                                    text = "$topTagText $typeText",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                    color = TextSecondary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = task.title,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = task.description ?: "Tavsifi kiritilmagan",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary,
+                                    maxLines = 1
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clip(CircleShape)
+                                    .border(2.dp, if (task.isCompleted) GreenPrimary else Color(0xFFD1D5DB), CircleShape)
+                                    .background(if (task.isCompleted) GreenPrimary else Color.Transparent)
+                                    .clickable { onMarkComplete(task.id) },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (task.isCompleted) {
+                                    Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                }
+                            }
                         }
                     }
-                }
-            } else {
-                scheduleState.tasks.forEach { task ->
-                    val plantName = scheduleState.plants.find { it.id == task.plantId }?.name
-                    ScheduleTaskItem(task = task, plantName = plantName, onComplete = { onMarkComplete(task.id) })
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
 
-            // === Bajarilish ===
-            val completedCount = scheduleState.tasks.count { it.isCompleted }
-            val totalCount = scheduleState.tasks.size
-            if (totalCount > 0) {
-                Spacer(modifier = Modifier.height(24.dp))
-                Text("Bajarilish", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Spacer(modifier = Modifier.height(12.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceLight),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Text("$completedCount / $totalCount vazifa", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-                            val percent = if (totalCount > 0) (completedCount * 100 / totalCount) else 0
-                            Text("$percent%", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = GreenPrimary)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // O'sish Natijasi Card
+            Card(
+                modifier = Modifier.fillMaxWidth().height(140.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = GreenPrimaryDark),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Box(modifier = Modifier.fillMaxSize().background(
+                    Brush.radialGradient(
+                        colors = listOf(GreenPrimary, GreenPrimaryDark),
+                        center = androidx.compose.ui.geometry.Offset(800f, 100f),
+                        radius = 800f
+                    )
+                )) {
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(24.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "O'sish natijasi",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Siz haftalik parvarish\ntartibining 75% qismini\nbajardingiz!",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.8f),
+                            lineHeight = 16.sp
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        // Progress Bar
+                        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .weight(0.75f)
+                                    .height(6.dp)
+                                    .clip(RoundedCornerShape(3.dp))
+                                    .background(Color.White)
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .weight(0.25f)
+                                    .height(6.dp)
+                                    .clip(RoundedCornerShape(3.dp))
+                                    .background(Color.White.copy(alpha=0.3f))
+                            )
                         }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        LinearProgressIndicator(
-                            progress = { if (totalCount > 0) completedCount.toFloat() / totalCount else 0f },
-                            modifier = Modifier.fillMaxWidth().height(10.dp).clip(RoundedCornerShape(5.dp)),
-                            color = GreenPrimary,
-                            trackColor = GreenPrimaryContainer,
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Navbatda Card
+            Card(
+                modifier = Modifier.fillMaxWidth().height(160.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.DarkGray),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Box(modifier = Modifier.fillMaxSize().background(Color(0xFF8B807B))) // Placeholder for greenhouse image
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Brush.verticalGradient(
+                                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)),
+                                startY = 100f
+                            ))
+                    )
+                    
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(24.dp)
+                    ) {
+                        Text(
+                            text = "NAVBATDA",
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                            fontWeight = FontWeight.Bold,
+                            color = AccentOrange,
+                            letterSpacing = 1.sp
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Butash jarayoni",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Ertaga soat 9:00 da Fikuslar\nkolleksiyasi uchun.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.8f),
+                            lineHeight = 16.sp
                         )
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(100.dp))
-        }
-    }
-
-    if (showAddDialog) {
-        AddTaskDialog(
-            plants = scheduleState.plants,
-            onDismiss = { showAddDialog = false },
-            onAdd = { title, type, time, plantId ->
-                onAddTask(title, type, time, plantId)
-                showAddDialog = false
-            }
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun AddTaskDialog(
-    plants: List<Plant>,
-    onDismiss: () -> Unit,
-    onAdd: (title: String, taskType: String, time: String?, plantId: String?) -> Unit
-) {
-    var title by remember { mutableStateOf("") }
-    var selectedType by remember { mutableStateOf("watering") }
-    var time by remember { mutableStateOf("") }
-    var selectedPlantId by remember { mutableStateOf<String?>(null) }
-    var plantDropdownExpanded by remember { mutableStateOf(false) }
-
-    val taskTypes = listOf(
-        "watering" to "💧 Sug'orish",
-        "fertilizing" to "🧪 O'g'itlash",
-        "pruning" to "✂️ Kesish",
-        "inspection" to "🔍 Tekshirish"
-    )
-
-    val selectedPlantName = plants.find { it.id == selectedPlantId }?.name ?: "Tanlanmagan"
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Yangi vazifa", fontWeight = FontWeight.Bold) },
-        text = {
-            Column {
-                // Vazifa nomi
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("Vazifa nomi") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = GreenPrimary, cursorColor = GreenPrimary)
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // O'simlik tanlash
-                Text("O'simlik:", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
-                Spacer(modifier = Modifier.height(4.dp))
-                ExposedDropdownMenuBox(
-                    expanded = plantDropdownExpanded,
-                    onExpandedChange = { plantDropdownExpanded = !plantDropdownExpanded }
-                ) {
-                    OutlinedTextField(
-                        value = selectedPlantName,
-                        onValueChange = {},
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = plantDropdownExpanded) },
-                        modifier = Modifier.fillMaxWidth().menuAnchor(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = GreenPrimary)
-                    )
-                    ExposedDropdownMenu(
-                        expanded = plantDropdownExpanded,
-                        onDismissRequest = { plantDropdownExpanded = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Tanlanmagan (umumiy vazifa)") },
-                            onClick = {
-                                selectedPlantId = null
-                                plantDropdownExpanded = false
-                            }
-                        )
-                        plants.forEach { plant ->
-                            DropdownMenuItem(
-                                text = { Text("🌿 ${plant.name}") },
-                                onClick = {
-                                    selectedPlantId = plant.id
-                                    plantDropdownExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Turi
-                Text("Turi:", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
-                Spacer(modifier = Modifier.height(4.dp))
-                Column {
-                    taskTypes.chunked(2).forEach { row ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            row.forEach { (type, label) ->
-                                FilterChip(
-                                    selected = selectedType == type,
-                                    onClick = { selectedType = type },
-                                    label = { Text(label, style = MaterialTheme.typography.labelSmall) },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = GreenPrimary,
-                                        selectedLabelColor = Color.White
-                                    )
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Vaqt
-                OutlinedTextField(
-                    value = time,
-                    onValueChange = { time = it },
-                    label = { Text("Vaqt (ixtiyoriy)") },
-                    placeholder = { Text("08:00") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = GreenPrimary, cursorColor = GreenPrimary)
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = { if (title.isNotBlank()) onAdd(title, selectedType, time.ifBlank { null }, selectedPlantId) },
-                colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary),
-                enabled = title.isNotBlank()
-            ) {
-                Text("Qo'shish")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Bekor qilish", color = TextSecondary)
-            }
-        }
-    )
-}
-
-@Composable
-private fun ScheduleTaskItem(
-    task: CareTask,
-    plantName: String?,
-    onComplete: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceLight),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.width(50.dp)
-            ) {
-                Text(
-                    text = task.scheduledTime ?: "—",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = GreenPrimaryDark
-                )
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Box(
-                modifier = Modifier
-                    .width(3.dp)
-                    .height(40.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(if (task.isCompleted) GreenPrimary else GreenPrimaryLight)
-            )
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = task.title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = if (task.isCompleted) TextSecondary else TextPrimary
-                )
-                Row {
-                    if (plantName != null) {
-                        Text("🌿 $plantName", style = MaterialTheme.typography.bodySmall, color = GreenPrimary)
-                        Text(" • ", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                    }
-                    Text(
-                        text = when (task.taskType) {
-                            "watering" -> "Sug'orish"
-                            "fertilizing" -> "O'g'itlash"
-                            "pruning" -> "Kesish"
-                            "inspection" -> "Tekshirish"
-                            else -> task.taskType
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
-                    )
-                }
-            }
-
-            IconButton(onClick = onComplete) {
-                if (task.isCompleted) {
-                    Icon(Icons.Default.CheckCircle, contentDescription = "Bajarildi", tint = GreenPrimary, modifier = Modifier.size(24.dp))
-                } else {
-                    Icon(Icons.Default.RadioButtonUnchecked, contentDescription = "Bajarish", tint = TextSecondary, modifier = Modifier.size(24.dp))
-                }
-            }
         }
     }
 }

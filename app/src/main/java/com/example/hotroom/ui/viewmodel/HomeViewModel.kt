@@ -42,10 +42,12 @@ class HomeViewModel(
         loadDashboard()
     }
 
-    fun loadDashboard() {
+    fun loadDashboard(showLoading: Boolean = true) {
         val userId = authRepository.getCurrentUserId() ?: return
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            if (showLoading) {
+                _uiState.value = _uiState.value.copy(isLoading = true)
+            }
 
             // O'simliklarni olish
             val plantsResult = plantRepository.getPlants(userId)
@@ -58,7 +60,11 @@ class HomeViewModel(
             // Bugungi vazifalarni olish
             val today = LocalDate.now().toString()
             val tasksResult = taskRepository.getTodayTasks(userId, today)
-            val tasks = tasksResult.getOrDefault(emptyList())
+            val tasks = tasksResult.getOrDefault(emptyList()).map { task ->
+                if (task.isCompleted && task.completedBy != null) {
+                    task.copy(completerName = com.example.hotroom.data.repository.SessionManager.greenhouseProfiles[task.completedBy]?.name?.ifBlank { "Ishchi" })
+                } else task
+            }
 
             // Oxirgi sensor ko'rsatkichini olish
             val sensorResult = sensorRepository.getLatestReadings(userId)
@@ -84,9 +90,11 @@ class HomeViewModel(
     }
 
     fun markTaskComplete(taskId: String) {
+        val userId = authRepository.getCurrentUserId() ?: return
         viewModelScope.launch {
-            taskRepository.markComplete(taskId)
-            loadDashboard()
+            authRepository.ensureProfileLoaded()
+            taskRepository.markComplete(taskId, userId)
+            loadDashboard(showLoading = false)
         }
     }
 }

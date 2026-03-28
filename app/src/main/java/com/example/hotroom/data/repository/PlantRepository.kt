@@ -75,11 +75,13 @@ class PlantRepository {
      * Sug'orish — watering_logs ga log yozadi.
      * DB trigger avtomatik: health +5, last_watered = now()
      */
-    suspend fun waterPlant(plantId: String, userId: String): Result<Unit> {
+    suspend fun waterPlant(plantId: String, userId: String, greenhouseId: String? = null): Result<Unit> {
         return try {
             val log = WateringLog(
                 plantId = plantId,
-                userId = userId
+                userId = userId,
+                greenhouseId = greenhouseId ?: SessionManager.greenhouseId,
+                completedBy = userId // currently treating userId as the one who completed
             )
             postgrest.from("watering_logs").insert(log)
             Result.success(Unit)

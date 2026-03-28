@@ -1,5 +1,8 @@
 package com.example.hotroom.ui.screens.plants
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -7,14 +10,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.hotroom.ui.components.EmeraldTextField
 import com.example.hotroom.ui.theme.*
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -28,215 +34,260 @@ fun AddPlantScreen(
 ) {
     var plantName by remember { mutableStateOf("") }
     var scientificName by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf("Sabzavot") }
-    var plantedDate by remember { mutableStateOf(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))) }
+    var selectedCategory by remember { mutableStateOf("Ko'kat") }
+    var plantedDate by remember { mutableStateOf(LocalDate.now().format(DateTimeFormatter.ofPattern("MM/dd/yyyy"))) }
     var hasSensor by remember { mutableStateOf(false) }
-    var wateringInterval by remember { mutableStateOf("24") }
-    var zone by remember { mutableStateOf("") }
-    var notes by remember { mutableStateOf("") }
 
-    val categories = listOf("Sabzavot", "Ko'kat", "Gul", "Meva")
+    val categories = listOf("Sabzavot", "Ko'kat", "Gul")
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "Yangi O'simlik",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        text = "Yangi namuna",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Orqaga")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Orqaga", tint = GreenPrimary)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                actions = {
+                    IconButton(onClick = { /* TODO */ }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Batafsil", tint = TextPrimary)
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.White
                 )
             )
-        }
+        },
+        containerColor = Color.White
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 24.dp)
         ) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Subtitle
+            Text(
+                text = "INVENTARNI KENGAYTIRISH",
+                style = MaterialTheme.typography.labelMedium,
+                color = GreenPrimary,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
+            )
             Spacer(modifier = Modifier.height(8.dp))
-
-            // O'simlik nomi
-            SectionLabel("O'SIMLIK NOMI *")
-            OutlinedTextField(
-                value = plantName,
-                onValueChange = { plantName = it },
-                placeholder = { Text("Masalan: Pomidor") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
-                colors = greenFieldColors()
+            Text(
+                text = "O'simlik qo'shish",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Avtomatlashtirilgan parvarish va o'sish monitoringini boshlash uchun issiqxonangizning yangi a'zosini ro'yxatdan o'tkazing.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondary,
+                lineHeight = 22.sp
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-            // Ilmiy nomi
-            SectionLabel("ILMIY NOMI (ixtiyoriy)")
-            OutlinedTextField(
-                value = scientificName,
-                onValueChange = { scientificName = it },
-                placeholder = { Text("Masalan: Solanum lycopersicum") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
-                colors = greenFieldColors()
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Toifasi
-            SectionLabel("TOIFASI")
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                categories.forEach { category ->
-                    val isSelected = category == selectedCategory
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { selectedCategory = category },
-                        label = {
-                            Text(
-                                text = category,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                            )
-                        },
-                        shape = RoundedCornerShape(24.dp),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = GreenPrimary,
-                            selectedLabelColor = TextOnGreen
-                        )
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Sug'orish oralig'i va Zona
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            // Image Upload Placeholder
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .border(2.dp, Color(0xFFE5E7EB), RoundedCornerShape(24.dp))
+                    .background(SurfaceContainerLow)
+                    .clickable { /* TODO: Open Image Picker */ },
+                contentAlignment = Alignment.Center
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    SectionLabel("SUG'ORISH ORALIG'I (soat)")
-                    OutlinedTextField(
-                        value = wateringInterval,
-                        onValueChange = { wateringInterval = it.filter { c -> c.isDigit() } },
-                        placeholder = { Text("24") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        singleLine = true,
-                        leadingIcon = { Icon(Icons.Default.Timer, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(20.dp)) },
-                        colors = greenFieldColors()
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        Icons.Outlined.PhotoCamera,
+                        contentDescription = "Rasm yuklash",
+                        tint = GreenPrimary,
+                        modifier = Modifier.size(48.dp)
                     )
-                }
-                Column(modifier = Modifier.weight(1f)) {
-                    SectionLabel("ZONA (ixtiyoriy)")
-                    OutlinedTextField(
-                        value = zone,
-                        onValueChange = { zone = it },
-                        placeholder = { Text("A1") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        singleLine = true,
-                        leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(20.dp)) },
-                        colors = greenFieldColors()
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "O'simlik rasmini yuklash",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
                     )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Ekilgan sana
-            SectionLabel("EKILGAN SANA")
-            OutlinedTextField(
-                value = plantedDate,
-                onValueChange = { plantedDate = it },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                trailingIcon = { Icon(Icons.Default.CalendarToday, contentDescription = null, tint = GreenPrimary) },
-                singleLine = true,
-                placeholder = { Text("2024-01-15") },
-                colors = greenFieldColors()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Eslatmalar
-            SectionLabel("ESLATMALAR (ixtiyoriy)")
-            OutlinedTextField(
-                value = notes,
-                onValueChange = { notes = it },
-                placeholder = { Text("O'simlik haqida qo'shimcha ma'lumot...") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                minLines = 2,
-                maxLines = 4,
-                colors = greenFieldColors()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Smart Sensor Toggle
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = SurfaceLight),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Smart datchikka ulanish", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-                        Text("Tuproq namligi va harorat avtomatik", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                    }
-                    Switch(
-                        checked = hasSensor,
-                        onCheckedChange = { hasSensor = it },
-                        colors = SwitchDefaults.colors(checkedTrackColor = GreenPrimary, checkedThumbColor = SurfaceLight)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "PNG, JPG. up to 10MB",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // Plant Name
+            EmeraldTextField(
+                value = plantName,
+                onValueChange = { plantName = it },
+                label = "O'SIMLIK NOMI",
+                placeholder = "masalan: Yarim tun jadosi",
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Scientific Name (Navi)
+            EmeraldTextField(
+                value = scientificName,
+                onValueChange = { scientificName = it },
+                label = "NAVI",
+                placeholder = "masalan: Sanseveria",
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // CATEGORY (NAMUNA TURI)
+            Text(
+                text = "NAMUNA TURI",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = TextSecondary,
+                letterSpacing = 1.sp
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                categories.forEach { category ->
+                    val isSelected = category == selectedCategory
+                    val chipBg = if (isSelected) GreenPrimary else Color.White
+                    val chipBorder = if (isSelected) GreenPrimary else Color(0xFFE5E7EB)
+                    val contentColor = if (isSelected) Color.White else TextPrimary
+                    
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(chipBg)
+                            .border(1.dp, chipBorder, RoundedCornerShape(12.dp))
+                            .clickable { selectedCategory = category }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (isSelected) {
+                                Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                            }
+                            Text(
+                                text = category,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = contentColor,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Planted Date
+            EmeraldTextField(
+                value = plantedDate,
+                onValueChange = { plantedDate = it },
+                label = "EKILGAN SANA",
+                placeholder = "10/24/2023",
+                trailingIcon = {
+                    Icon(Icons.Default.CalendarToday, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(20.dp))
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(48.dp))
+
             // Add button
             Button(
                 onClick = {
                     if (plantName.isNotBlank()) {
-                        val interval = wateringInterval.toIntOrNull() ?: 24
                         onAddPlant(
                             plantName,
                             scientificName.ifBlank { null },
                             selectedCategory,
                             plantedDate.ifBlank { null },
                             hasSensor,
-                            interval,
-                            zone.ifBlank { null },
-                            notes.ifBlank { null }
+                            24, // Default interval
+                            null,
+                            null
                         )
                     }
                 },
-                modifier = Modifier.fillMaxWidth().height(52.dp),
-                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary),
                 enabled = plantName.isNotBlank() && !isAdding
             ) {
                 if (isAdding) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
                 } else {
-                    Text("O'SIMLIKNI QO'SHISH", style = MaterialTheme.typography.labelLarge, fontSize = 16.sp)
+                    Text(
+                        text = "O'SIMLIKNI QO'SHISH",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Smart Sensor Toggle
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = SurfaceLight),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 20.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Sensors, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(24.dp)) // Placeholder icon
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f, fill = false)) {
+                            Text("Smart datchikka ulanish", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = TextPrimary)
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text("Tuproq namligi va harorat avtomatik", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                        }
+                    }
+                    Switch(
+                        checked = hasSensor,
+                        onCheckedChange = { hasSensor = it },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = GreenPrimary,
+                            uncheckedThumbColor = Color.White,
+                            uncheckedTrackColor = Color(0xFFD1D5DB)
+                        )
+                    )
                 }
             }
 
@@ -244,21 +295,3 @@ fun AddPlantScreen(
         }
     }
 }
-
-@Composable
-private fun SectionLabel(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelMedium,
-        fontWeight = FontWeight.Bold,
-        color = TextSecondary,
-        modifier = Modifier.padding(bottom = 8.dp)
-    )
-}
-
-@Composable
-private fun greenFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedBorderColor = GreenPrimary,
-    cursorColor = GreenPrimary,
-    focusedLabelColor = GreenPrimary
-)

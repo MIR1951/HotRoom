@@ -21,6 +21,19 @@ class ProfileRepository {
         }
     }
 
+    suspend fun getGreenhouseProfiles(ghId: String): Result<List<Profile>> {
+        return try {
+            val profiles = postgrest.from("profiles")
+                .select() {
+                    filter { eq("greenhouse_id", ghId) }
+                }
+                .decodeList<Profile>()
+            Result.success(profiles)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun updateProfile(userId: String, updates: Map<String, Any?>): Result<Unit> {
         return try {
             postgrest.from("profiles").update(updates) {

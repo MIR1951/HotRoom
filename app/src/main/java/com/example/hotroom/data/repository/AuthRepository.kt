@@ -44,6 +44,9 @@ class AuthRepository {
         }
     }
 
+    val sessionStatus: kotlinx.coroutines.flow.StateFlow<io.github.jan.supabase.auth.status.SessionStatus>
+        get() = auth.sessionStatus
+
     fun isLoggedIn(): Boolean {
         return auth.currentSessionOrNull() != null
     }
@@ -54,5 +57,18 @@ class AuthRepository {
 
     fun getCurrentUserEmail(): String? {
         return auth.currentUserOrNull()?.email
+    }
+
+    suspend fun ensureProfileLoaded(profileRepo: ProfileRepository = ProfileRepository()) {
+        if (SessionManager.currentProfile == null) {
+            val uid = getCurrentUserId() ?: return
+            val profile = profileRepo.getProfile(uid).getOrNull()
+            SessionManager.currentProfile = profile
+            
+            profile?.greenhouseId?.let { ghId ->
+                val team = profileRepo.getGreenhouseProfiles(ghId).getOrDefault(emptyList())
+                SessionManager.greenhouseProfiles = team.associateBy { it.id }
+            }
+        }
     }
 }

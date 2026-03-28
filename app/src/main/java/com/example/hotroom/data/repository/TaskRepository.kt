@@ -67,12 +67,13 @@ class TaskRepository {
         }
     }
 
-    suspend fun markComplete(taskId: String): Result<Unit> {
+    suspend fun markComplete(taskId: String, completedBy: String): Result<Unit> {
         return try {
             postgrest.from("care_tasks").update(
                 mapOf(
                     "is_completed" to true,
-                    "completed_at" to java.time.Instant.now().toString()
+                    "completed_at" to java.time.Instant.now().toString(),
+                    "completed_by" to completedBy
                 )
             ) {
                 filter { eq("id", taskId) }
@@ -86,12 +87,13 @@ class TaskRepository {
     /**
      * O'simlik sug'orilganda uning bugungi sug'orish vazifalarini bajarildi qilish
      */
-    suspend fun completeWateringTasksForPlant(plantId: String, date: String): Result<Unit> {
+    suspend fun completeWateringTasksForPlant(plantId: String, date: String, completedBy: String): Result<Unit> {
         return try {
             postgrest.from("care_tasks").update(
                 mapOf(
                     "is_completed" to true,
-                    "completed_at" to java.time.Instant.now().toString()
+                    "completed_at" to java.time.Instant.now().toString(),
+                    "completed_by" to completedBy
                 )
             ) {
                 filter {

@@ -26,7 +26,22 @@ class AuthViewModel(
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
     init {
-        _uiState.value = _uiState.value.copy(isLoggedIn = authRepository.isLoggedIn())
+        viewModelScope.launch {
+            authRepository.sessionStatus.collect { status ->
+                when (status) {
+                    is io.github.jan.supabase.auth.status.SessionStatus.Authenticated -> {
+                        _uiState.value = _uiState.value.copy(isLoggedIn = true, isLoading = false)
+                    }
+                    is io.github.jan.supabase.auth.status.SessionStatus.NotAuthenticated -> {
+                        _uiState.value = _uiState.value.copy(isLoggedIn = false, isLoading = false)
+                    }
+                    else -> {
+                        // For Initializing, LoadingFromStorage, NetworkError, etc
+                        _uiState.value = _uiState.value.copy(isLoading = true)
+                    }
+                }
+            }
+        }
     }
 
     fun updateEmail(email: String) {

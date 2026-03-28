@@ -1,11 +1,12 @@
 package com.example.hotroom.ui.screens.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -16,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -23,10 +25,7 @@ import com.example.hotroom.data.model.CareTask
 import com.example.hotroom.data.model.Plant
 import com.example.hotroom.ui.theme.*
 import com.example.hotroom.ui.viewmodel.HomeUiState
-import java.time.Duration
-import java.time.Instant
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     homeState: HomeUiState,
@@ -36,365 +35,369 @@ fun HomeScreen(
     onMarkTaskComplete: (String) -> Unit,
     onRefresh: () -> Unit
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "🌿", fontSize = 24.sp)
-                        Spacer(modifier = Modifier.width(8.dp))
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Background)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Greeting text
+            Text(
+                text = "HOZIRGI HOLAT",
+                style = MaterialTheme.typography.labelSmall,
+                color = TextSecondary,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Sizning bog'ingiz",
+                style = MaterialTheme.typography.headlineLarge.copy(fontSize = 32.sp),
+                fontWeight = FontWeight.ExtraBold,
+                color = TextPrimary
+            )
+            Text(
+                text = "gullab-yashnamoqda.",
+                style = MaterialTheme.typography.headlineLarge.copy(fontSize = 32.sp),
+                fontWeight = FontWeight.ExtraBold,
+                fontStyle = FontStyle.Italic,
+                color = GreenPrimary
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Optimal Conditions Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = SurfaceContainerLow),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp)
+                ) {
+                    Column {
                         Text(
-                            text = "Issiqxona",
-                            style = MaterialTheme.typography.titleLarge,
+                            text = "O'simlik salomatligi",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = TextSecondary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "${homeState.averageHealth}%",
+                            style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Bold,
-                            color = GreenPrimaryDark
+                            color = GreenPrimary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "OPTIMAL SHAROITLAR",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
                         )
                     }
-                },
-                actions = {
-                    IconButton(onClick = onNavigateToProfile) {
-                        Icon(Icons.Default.Person, contentDescription = "Profil", tint = TextSecondary)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onNavigateToAddPlant,
-                containerColor = GreenPrimary,
-                contentColor = Color.White,
-                shape = CircleShape
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Yangi o'simlik")
-            }
-        }
-    ) { padding ->
-        if (homeState.isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = GreenPrimary)
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp)
-            ) {
-                // === Health + Stats Card ===
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = GreenPrimary)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(20.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = if (homeState.totalPlants == 0) "O'simlik qo'shing"
-                                else "${homeState.totalPlants} ta o'simlik",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = when {
-                                    homeState.totalPlants == 0 -> "Hali o'simlik yo'q"
-                                    homeState.averageHealth >= 80 -> "Yaxshi holat ✨"
-                                    homeState.averageHealth >= 50 -> "O'rtacha holat"
-                                    else -> "⚠️ E'tibor kerak"
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.8f)
-                            )
-                            if (homeState.totalTasksToday > 0) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "📋 ${homeState.completedTasksToday}/${homeState.totalTasksToday} vazifa bajarildi",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.White.copy(alpha = 0.9f)
-                                )
-                            }
-                        }
-                        Box(
-                            modifier = Modifier
-                                .size(80.dp)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.2f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = if (homeState.totalPlants == 0) "—" else "${homeState.averageHealth}%",
-                                style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
-                    }
+                    // Decorative shapes (placeholder for SVG stars)
+                    Icon(
+                        Icons.Filled.Star,
+                        contentDescription = null,
+                        tint = GreenPrimary.copy(alpha = 0.15f),
+                        modifier = Modifier
+                            .size(120.dp)
+                            .align(Alignment.CenterEnd)
+                            .offset(x = 32.dp, y = (-10).dp)
+                    )
                 }
+            }
 
-                Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-                // === Sensor Stats ===
-                val temp = homeState.latestReading?.temperature
-                val humidity = homeState.latestReading?.humidity
+            // Hayotiy ko'rsatkichlar Card
+            val temp = homeState.latestReading?.temperature ?: 24.0f
+            val humidity = homeState.latestReading?.humidity ?: 65.0f
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = SurfaceLight),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Thermostat, contentDescription = null, tint = AccentOrange, modifier = Modifier.size(20.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Harorat", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = if (temp != null) "${String.format("%.1f", temp)}°C" else "—",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = SurfaceLight),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.WaterDrop, contentDescription = null, tint = InfoBlue, modifier = Modifier.size(20.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Namlik", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = if (humidity != null) "${String.format("%.0f", humidity)}%" else "—",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
-
-                // === Sug'orish kerak bo'lgan o'simliklar ===
-                if (homeState.plantsNeedingWater.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(24.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(modifier = Modifier.padding(24.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "💧 Sug'orish kerak",
+                            text = "Hayotiy ko'rsatkichlar",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
                         )
-                        Text(
-                            text = "${homeState.plantsNeedingWater.size} ta",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = AccentOrange,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Icon(Icons.Default.WifiTethering, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(20.dp))
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    homeState.plantsNeedingWater.take(3).forEach { plant ->
-                        NeedWaterCard(plant = plant)
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // === Bugungi vazifalar ===
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Bugungi vazifalar",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    TextButton(onClick = onNavigateToSchedule) {
-                        Text("Jadvalni ko'rish", color = GreenPrimary, style = MaterialTheme.typography.bodyMedium)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                if (homeState.todayTasks.isEmpty()) {
+                    Spacer(modifier = Modifier.height(20.dp))
+                    
+                    // Temp Card
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = SurfaceLight)
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = SurfaceContainerLow)
                     ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth().padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "✅", fontSize = 32.sp)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Bugungi vazifa yo'q",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = TextSecondary
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(InfoBlue.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.Thermostat, contentDescription = null, tint = InfoBlue)
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text("Harorat", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
+                                Text(
+                                    text = "${String.format("%.0f", temp)}°C",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                            }
                         }
                     }
-                } else {
-                    homeState.todayTasks.forEach { task ->
-                        val plantName = homeState.plants.find { it.id == task.plantId }?.name
-                        TaskItem(
-                            task = task,
-                            plantName = plantName,
-                            onComplete = { onMarkTaskComplete(task.id) }
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Humidity Card
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = SurfaceContainerLow)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(InfoBlue.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.WaterDrop, contentDescription = null, tint = InfoBlue)
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text("Namlik", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
+                                Text(
+                                    text = "${String.format("%.0f", humidity)}%",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                            }
+                        }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(100.dp))
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Bugungi vazifalar Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(modifier = Modifier.padding(24.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Bugungi vazifalar",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "Jadvalni ko'rish",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = GreenPrimary,
+                            modifier = Modifier.clickable { onNavigateToSchedule() }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    if (homeState.todayTasks.isEmpty()) {
+                        Text(
+                            text = "Bugungi vazifa yo'q",
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSecondary,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            homeState.todayTasks.forEach { task ->
+                                val plant = homeState.plants.find { it.id == task.plantId }
+                                TaskRow(task = task, plant = plant, onComplete = { onMarkTaskComplete(task.id) })
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Tanlangan Namuna Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.DarkGray)
+            ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Box(modifier = Modifier.fillMaxSize().background(Color(0xFF2C3E2D)))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Brush.verticalGradient(
+                                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.9f)),
+                                startY = 100f
+                            ))
+                    )
+                    
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(24.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(GreenPrimary)
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "TANLANGAN NAMUNA",
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                letterSpacing = 1.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Monstera Deliciosa",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "O'sish sikli cho'qqisiga yetmoqda. Optimal namlik\n70% da saqlanmoqda.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.8f),
+                            lineHeight = 16.sp
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(100.dp))
+        }
+        
+        FloatingActionButton(
+            onClick = onNavigateToAddPlant,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 24.dp, bottom = 80.dp),
+            containerColor = GreenPrimary,
+            contentColor = Color.White,
+            shape = CircleShape
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Qo'shish")
         }
     }
 }
 
 @Composable
-private fun NeedWaterCard(plant: Plant) {
-    val waterText = if (plant.lastWatered != null) {
-        try {
-            val last = Instant.parse(plant.lastWatered)
-            val diff = Duration.between(last, Instant.now())
-            when {
-                diff.toHours() < 24 -> "${diff.toHours()} soat oldin"
-                else -> "${diff.toDays()} kun oldin"
-            }
-        } catch (e: Exception) { "Noma'lum" }
-    } else "Hech qachon"
-
+fun TaskRow(
+    task: CareTask,
+    plant: Plant?,
+    onComplete: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = AccentOrange.copy(alpha = 0.08f)),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = SurfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(AccentOrange.copy(alpha = 0.15f)),
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(Color.White),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "🌱", fontSize = 20.sp)
+                Text(text = "🪴", fontSize = 24.sp)
             }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = plant.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = "Oxirgi sug'orish: $waterText",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = AccentOrange
-                )
-            }
-            Icon(
-                Icons.Default.WaterDrop,
-                contentDescription = null,
-                tint = AccentOrange,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun TaskItem(
-    task: CareTask,
-    plantName: String?,
-    onComplete: () -> Unit
-) {
-    val iconData = when (task.taskType) {
-        "watering" -> Pair(Icons.Default.WaterDrop, InfoBlue)
-        "fertilizing" -> Pair(Icons.Default.Science, AccentOrange)
-        "pruning" -> Pair(Icons.Default.ContentCut, GreenPrimary)
-        "inspection" -> Pair(Icons.Default.Visibility, GreenPrimaryDark)
-        else -> Pair(Icons.Default.Spa, GreenPrimary)
-    }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceLight),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(iconData.second.copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(iconData.first, contentDescription = null, tint = iconData.second, modifier = Modifier.size(22.dp))
-            }
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = task.title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
                 )
-                Row {
-                    if (plantName != null) {
-                        Text(
-                            text = "🌿 $plantName",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = GreenPrimary
-                        )
-                        Text(text = " • ", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                    }
-                    Text(
-                        text = task.scheduledTime ?: task.taskType,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
-                    )
-                }
+                Spacer(modifier = Modifier.height(2.dp))
+                val zoneText = plant?.zone ?: "Umumiy hudud"
+                val timeText = task.scheduledTime ?: "08:00 AM"
+                Text(
+                    text = "$zoneText • $timeText",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary
+                )
             }
-            IconButton(onClick = onComplete) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, if (task.isCompleted) GreenPrimary else Color(0xFFD1D5DB), CircleShape)
+                    .background(if (task.isCompleted) GreenPrimary else Color.Transparent)
+                    .clickable { onComplete() },
+                contentAlignment = Alignment.Center
+            ) {
                 if (task.isCompleted) {
-                    Icon(Icons.Default.CheckCircle, contentDescription = "Bajarildi", tint = GreenPrimary, modifier = Modifier.size(24.dp))
-                } else {
-                    Icon(Icons.Default.RadioButtonUnchecked, contentDescription = "Bajarilmagan", tint = TextSecondary.copy(alpha = 0.5f), modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
                 }
             }
         }

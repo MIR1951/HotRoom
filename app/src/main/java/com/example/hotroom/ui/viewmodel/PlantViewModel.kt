@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import com.example.hotroom.data.repository.SessionManager
 
 data class PlantUiState(
     val plants: List<Plant> = emptyList(),
@@ -39,10 +40,14 @@ class PlantViewModel(
         loadPlants()
     }
 
-    fun loadPlants() {
+    fun loadPlants(showLoading: Boolean = true) {
         val userId = authRepository.getCurrentUserId() ?: return
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            if (showLoading) {
+                _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            } else {
+                _uiState.value = _uiState.value.copy(errorMessage = null)
+            }
             val result = plantRepository.getPlants(userId)
             _uiState.value = if (result.isSuccess) {
                 _uiState.value.copy(
@@ -88,8 +93,13 @@ class PlantViewModel(
         val userId = authRepository.getCurrentUserId() ?: return
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isAddingPlant = true, addPlantSuccess = false)
+            
+            // Profil keshlanganiga ishonch qilish (Greenhouse_idni yechib olish uchun)
+            authRepository.ensureProfileLoaded()
+            
             val plant = Plant(
                 userId = userId,
+                greenhouseId = SessionManager.greenhouseId,
                 name = name,
                 scientificName = scientificName?.ifBlank { null },
                 category = category.lowercase(),
@@ -104,6 +114,7 @@ class PlantViewModel(
                 // Avtomatik sug'orish vazifasi yaratish
                 val task = CareTask(
                     userId = userId,
+                    greenhouseId = SessionManager.greenhouseId,
                     title = "$name ni sug'orish",
                     taskType = "watering",
                     scheduledDate = LocalDate.now().toString(),
@@ -113,7 +124,7 @@ class PlantViewModel(
                 taskRepository.addTask(task)
 
                 _uiState.value = _uiState.value.copy(isAddingPlant = false, addPlantSuccess = true)
-                loadPlants()
+                loadPlants(showLoading = false)
                 notifyRefresh()
             } else {
                 _uiState.value = _uiState.value.copy(
@@ -127,23 +138,25 @@ class PlantViewModel(
     fun deletePlant(plantId: String) {
         viewModelScope.launch {
             plantRepository.deletePlant(plantId)
-            loadPlants()
+            loadPlants(showLoading = false)
             notifyRefresh()
         }
     }
 
     /**
-     * Sug'orish: watering_log yaratish + bugungi sug'orish vazifalarini bajarildi qilish
+     * Sug'orish: watering_log yaratish + bugungi sug'orish vazifalarini baixarildi qilish
      */
     fun waterPlant(plantId: String) {
         val userId = authRepository.getCurrentUserId() ?: return
         viewModelScope.launch {
+            authRepository.ensureProfileLoaded()
+            
             // 1. Watering log yozish (trigger health yangilaydi)
-            plantRepository.waterPlant(plantId, userId)
+            plantRepository.waterPlant(plantId, userId, SessionManager.greenhouseId)
             // 2. Bugungi sug'orish vazifalarini avtomatik bajarildi qilish
-            taskRepository.completeWateringTasksForPlant(plantId, LocalDate.now().toString())
+            taskRepository.completeWateringTasksForPlant(plantId, LocalDate.now().toString(), userId)
             // 3. Ro'yxatni yangilash
-            loadPlants()
+            loadPlants(showLoading = false)
             notifyRefresh()
         }
     }
